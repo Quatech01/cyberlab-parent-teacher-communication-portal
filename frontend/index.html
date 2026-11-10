@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
+  <title>Brookside School — Communication Portal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #1d4ed8; --primary-hover: #1e40af;
+      --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0;
+      --text: #0f172a; --muted: #64748b; --danger: #dc2626;
+      --success: #16a34a; --warn: #d97706;
+    }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { cursor: pointer; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; transition: background 0.15s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    input, select, textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--surface); color: var(--text); }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+    label { font-size: 13px; font-weight: 500; color: var(--muted); display: block; margin-bottom: 4px; }
+    .form-group { margin-bottom: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+    .alert { padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
+    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    nav { background: var(--primary); color: #fff; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    nav .brand { font-weight: 700; font-size: 16px; }
+    nav .nav-right { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+    nav .nav-right button { background: rgba(255,255,255,0.15); color: #fff; padding: 6px 14px; }
+    nav .nav-right button:hover { background: rgba(255,255,255,0.3); }
+    .badge { background: #ef4444; color: #fff; border-radius: 999px; font-size: 11px; padding: 2px 7px; margin-left: 4px; }
+    .container { max-width: 920px; margin: 0 auto; padding: 32px 16px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 2px solid var(--border); }
+    .tab { padding: 10px 20px; border-radius: 6px 6px 0 0; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--muted); background: none; border: none; transition: color 0.15s; }
+    .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; }
+    .tab:hover { color: var(--text); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { font-weight: 600; color: var(--muted); background: #f8fafc; }
+    tr:hover { background: #f8fafc; }
+    .unread td { font-weight: 600; }
+    .role-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .role-admin   { background: #fef3c7; color: #92400e; }
+    .role-teacher { background: #dbeafe; color: #1e40af; }
+    .role-parent  { background: #dcfce7; color: #166534; }
+    .msg-preview { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-weight: 400; }
+    #auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .auth-card { width: 100%; max-width: 400px; }
+    .auth-card h1 { font-size: 22px; margin-bottom: 8px; }
+    .auth-card p  { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+    .auth-toggle  { text-align: center; margin-top: 20px; font-size: 14px; color: var(--muted); }
+    #app { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="auth-wrap">
+  <div class="card auth-card" id="login-card">
+    <h1>Sign in</h1>
+    <p>Brookside School Communication Portal</p>
+    <div id="login-error"></div>
+    <div class="form-group"><label>Username or email</label><input id="l-username" type="text" autocomplete="username"></div>
+    <div class="form-group"><label>Password</label><input id="l-password" type="password" autocomplete="current-password"></div>
+    <button class="btn-primary" style="width:100%" onclick="doLogin()">Sign in</button>
+    <div class="auth-toggle">Don't have an account? <a href="#" onclick="showRegister()">Register</a></div>
+  </div>
+
+  <div class="card auth-card" id="register-card" style="display:none">
+    <h1>Create account</h1>
+    <p>Join the Brookside communication portal</p>
+    <div id="register-error"></div>
+    <div class="form-group"><label>Display name</label><input id="r-name" type="text"></div>
+    <div class="form-group"><label>Username</label><input id="r-username" type="text" autocomplete="username"></div>
+    <div class="form-group"><label>Email</label><input id="r-email" type="email" autocomplete="email"></div>
+    <div class="form-group"><label>Password</label><input id="r-password" type="password" autocomplete="new-password"></div>
+    <button class="btn-primary" style="width:100%" onclick="doRegister()">Create account</button>
+    <div class="auth-toggle">Already have an account? <a href="#" onclick="showLogin()">Sign in</a></div>
+  </div>
+</div>
+
+<div id="app">
+  <nav>
+    <span class="brand">Brookside School</span>
+    <div class="nav-right">
+      <span id="nav-user"></span>
+      <button onclick="doLogout()">Sign out</button>
+    </div>
+  </nav>
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" data-tab="inbox"         onclick="switchTab('inbox')">Inbox <span id="unread-badge" class="badge" style="display:none"></span></button>
+      <button class="tab"        data-tab="sent"          onclick="switchTab('sent')">Sent</button>
+      <button class="tab"        data-tab="compose"       onclick="switchTab('compose')">Compose</button>
+      <button class="tab"        data-tab="announcements" onclick="switchTab('announcements')">Announcements</button>
+    </div>
+    <div id="tab-content"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+let accessToken  = null;
+let csrfToken    = null;
+let currentUser  = null;
+let activeTab    = 'inbox';
+
+async function apiReq(method, path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (accessToken) headers['Authorization']  = 'Bearer ' + accessToken;
+  if (csrfToken && method !== 'GET') headers['X-CSRF-Token'] = csrfToken;
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/api' + path, opts);
+  if (res.status === 401) { logout(); return null; }
+  return res;
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="alert alert-${type}">${escHtml(msg)}</div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function roleTag(role) {
+  return `<span class="role-tag role-${role}">${role}</span>`;
+}
+
+function relTime(dt) {
+  const diff = Date.now() - new Date(dt).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return new Date(dt).toLocaleDateString('en-GB');
+}
+
+async function doLogin() {
+  const username = document.getElementById('l-username').value.trim();
+  const password = document.getElementById('l-password').value;
+  if (!username || !password) { showAlert('login-error', 'Please enter username and password.', 'error'); return; }
+  const res  = await fetch('/api/auth/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (!res.ok) { showAlert('login-error', data.error || 'Login failed', 'error'); return; }
+  accessToken = data.access_token;
+  csrfToken   = data.csrf_token;
+  currentUser = data.user;
+  enterApp();
+}
+
+async function doRegister() {
+  const display_name = document.getElementById('r-name').value.trim();
+  const username     = document.getElementById('r-username').value.trim();
+  const email        = document.getElementById('r-email').value.trim();
+  const password     = document.getElementById('r-password').value;
+  const res  = await fetch('/api/auth/register', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password, display_name })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = data.errors ? data.errors.map(e => e.msg).join(', ') : (data.error || 'Registration failed');
+    showAlert('register-error', msg, 'error'); return;
+  }
+  showAlert('register-error', 'Account created! Please sign in.', 'success');
+  setTimeout(showLogin, 1200);
+}
+
+function logout() {
+  accessToken = null; csrfToken = null; currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-wrap').style.display = 'flex';
+  showLogin();
+}
+
+async function doLogout() {
+  await apiReq('POST', '/auth/logout', {});
+  logout();
+}
+
+function enterApp() {
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('nav-user').textContent = currentUser.display_name + ' (' + currentUser.role + ')';
+  switchTab('inbox');
+  pollUnread();
+}
+
+function showLogin()    { document.getElementById('login-card').style.display=''; document.getElementById('register-card').style.display='none'; }
+function showRegister() { document.getElementById('login-card').style.display='none'; document.getElementById('register-card').style.display=''; }
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  if (tab === 'inbox')         renderInbox();
+  else if (tab === 'sent')     renderSent();
+  else if (tab === 'compose')  renderCompose();
+  else if (tab === 'announcements') renderAnnouncements();
+}
+
+async function pollUnread() {
+  const res = await apiReq('GET', '/messages/unread-count');
+  if (!res) return;
+  const { count } = await res.json();
+  const badge = document.getElementById('unread-badge');
+  if (count > 0) { badge.textContent = count; badge.style.display = ''; }
+  else badge.style.display = 'none';
+  setTimeout(pollUnread, 30000);
+}
+
+async function renderInbox() {
+  const res  = await apiReq('GET', '/messages/inbox');
+  if (!res) return;
+  const msgs = await res.json();
+  const tc   = document.getElementById('tab-content');
+  if (msgs.length === 0) { tc.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Your inbox is empty.</p>'; return; }
+  tc.innerHTML = `<table><thead><tr><th>From</th><th>Subject</th><th>Received</th><th></th></tr></thead><tbody>
+    ${msgs.map(m => `<tr class="${m.is_read ? '' : 'unread'}">
+      <td>${escHtml(m.sender_name)} ${roleTag(m.sender_role)}</td>
+      <td><div>${escHtml(m.subject)}</div><div class="msg-preview">${escHtml(m.body)}</div></td>
+      <td style="white-space:nowrap;color:var(--muted)">${relTime(m.created_at)}</td>
+      <td style="display:flex;gap:6px">
+        ${!m.is_read ? `<button class="btn-secondary" style="font-size:12px;padding:4px 10px" onclick="markRead(${m.id})">Mark read</button>` : ''}
+        <button class="btn-secondary" style="font-size:12px;padding:4px 10px" onclick="deleteMsg(${m.id})">Delete</button>
+      </td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+async function renderSent() {
+  const res  = await apiReq('GET', '/messages/sent');
+  if (!res) return;
+  const msgs = await res.json();
+  const tc   = document.getElementById('tab-content');
+  if (msgs.length === 0) { tc.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">No sent messages.</p>'; return; }
+  tc.innerHTML = `<table><thead><tr><th>To</th><th>Subject</th><th>Sent</th><th>Read?</th></tr></thead><tbody>
+    ${msgs.map(m => `<tr>
+      <td>${escHtml(m.recipient_name)} ${roleTag(m.recipient_role)}</td>
+      <td><div>${escHtml(m.subject)}</div><div class="msg-preview">${escHtml(m.body)}</div></td>
+      <td style="white-space:nowrap;color:var(--muted)">${relTime(m.created_at)}</td>
+      <td>${m.is_read ? '✓ Read' : '<span style="color:var(--muted)">Unread</span>'}</td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+async function renderCompose() {
+  const res      = await apiReq('GET', '/messages/contacts');
+  if (!res) return;
+  const contacts = await res.json();
+  const tc = document.getElementById('tab-content');
+  tc.innerHTML = `<div class="card" style="max-width:600px">
+    <h2 style="margin-bottom:20px;font-size:18px">New Message</h2>
+    <div id="compose-alert"></div>
+    <div class="form-group">
+      <label>To</label>
+      <select id="c-recipient">
+        <option value="">— Select recipient —</option>
+        ${contacts.map(c => `<option value="${c.id}">${escHtml(c.display_name)} (${c.role})</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Subject</label><input id="c-subject" type="text" maxlength="200"></div>
+    <div class="form-group"><label>Message</label><textarea id="c-body" rows="6" maxlength="5000"></textarea></div>
+    <button class="btn-primary" onclick="sendMsg()">Send message</button>
+  </div>`;
+}
+
+async function sendMsg() {
+  const recipient_id = parseInt(document.getElementById('c-recipient').value);
+  const subject = document.getElementById('c-subject').value.trim();
+  const body    = document.getElementById('c-body').value.trim();
+  if (!recipient_id) { showAlert('compose-alert','Please select a recipient.','error'); return; }
+  if (!subject)      { showAlert('compose-alert','Subject is required.','error'); return; }
+  if (!body)         { showAlert('compose-alert','Message body is required.','error'); return; }
+  const res = await apiReq('POST', '/messages/send', { recipient_id, subject, body });
+  if (!res) return;
+  const data = await res.json();
+  if (!res.ok) { showAlert('compose-alert', data.error || 'Failed to send.', 'error'); return; }
+  showAlert('compose-alert', 'Message sent!', 'success');
+  document.getElementById('c-subject').value = '';
+  document.getElementById('c-body').value    = '';
+}
+
+async function markRead(id) {
+  await apiReq('PUT', `/messages/${id}/read`, {});
+  renderInbox(); pollUnread();
+}
+
+async function deleteMsg(id) {
+  await apiReq('DELETE', `/messages/${id}`, null);
+  renderInbox();
+}
+
+async function renderAnnouncements() {
+  const res   = await apiReq('GET', '/announcements');
+  if (!res) return;
+  const anns  = await res.json();
+  const isStaff = currentUser.role === 'admin' || currentUser.role === 'teacher';
+  const tc = document.getElementById('tab-content');
+  let html = '';
+  if (isStaff) {
+    html += `<div class="card" style="margin-bottom:24px">
+      <h3 style="margin-bottom:16px;font-size:16px">Post Announcement</h3>
+      <div id="ann-alert"></div>
+      <div class="form-group"><label>Title</label><input id="ann-title" type="text" maxlength="200"></div>
+      <div class="form-group"><label>Message</label><textarea id="ann-body" rows="4" maxlength="5000"></textarea></div>
+      <div class="form-group"><label>Audience</label>
+        <select id="ann-audience"><option value="all">Everyone</option><option value="parents">Parents</option><option value="teachers">Teachers</option></select>
+      </div>
+      <button class="btn-primary" onclick="postAnnouncement()">Post</button>
+    </div>`;
+  }
+  if (anns.length === 0) { html += '<p style="color:var(--muted);text-align:center;padding:40px">No announcements yet.</p>'; }
+  else {
+    html += anns.map(a => `<div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+        <h3 style="font-size:16px">${escHtml(a.title)}</h3>
+        <span style="font-size:12px;color:var(--muted)">${relTime(a.created_at)}</span>
+      </div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:8px">By ${escHtml(a.author_name)} ${roleTag(a.author_role)} · ${escHtml(a.target_audience)}</p>
+      <p style="font-size:14px">${escHtml(a.body)}</p>
+      ${currentUser.role==='admin' ? `<button class="btn-danger" style="margin-top:12px;font-size:12px;padding:4px 10px" onclick="deleteAnn(${a.id})">Delete</button>` : ''}
+    </div>`).join('');
+  }
+  tc.innerHTML = html;
+}
+
+async function postAnnouncement() {
+  const title    = document.getElementById('ann-title').value.trim();
+  const body     = document.getElementById('ann-body').value.trim();
+  const audience = document.getElementById('ann-audience').value;
+  if (!title || !body) { showAlert('ann-alert','Title and message are required.','error'); return; }
+  const res = await apiReq('POST', '/announcements', { title, body: body, target_audience: audience });
+  if (!res) return;
+  const data = await res.json();
+  if (!res.ok) { showAlert('ann-alert', data.error || 'Failed.', 'error'); return; }
+  showAlert('ann-alert', 'Announcement posted!', 'success');
+  document.getElementById('ann-title').value = '';
+  document.getElementById('ann-body').value  = '';
+  setTimeout(renderAnnouncements, 800);
+}
+
+async function deleteAnn(id) {
+  await apiReq('DELETE', '/announcements/' + id, null);
+  renderAnnouncements();
+}
+</script>
+</body>
+</html>
